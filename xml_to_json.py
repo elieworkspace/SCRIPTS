@@ -10,7 +10,7 @@ def setup_logging():
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s'
     )
-
+#d
 def convert_and_save_xml_to_json(xml_file, output_folder):
     """
     Convertit un fichier XML en JSON et l'enregistre dans un dossier spécifié.
