@@ -260,6 +260,7 @@ def main():
     parser.add_argument("--top", type=int, default=0, help="Afficher seulement les N ports les plus fréquents (0 = tous)")
     parser.add_argument("--critical", type=str, default="", help="Liste de ports critiques séparés par des virgules ex: 22,80,3389")
     parser.add_argument("--json-out-only", action="store_true", help="Afficher seulement le résumé key/value (JSON)")
+    parser.add_argument("--save-json", type=str, default="", help="Sauvegarder le résumé JSON: chemin de dossier (nom auto) ou chemin de fichier complet")
     args = parser.parse_args()
 
     if not os.path.isfile(args.json_file):
@@ -284,6 +285,29 @@ def main():
                     pass
 
     ip_ports, port_ips, summary = summarize(data, critical_ports=critical_ports)
+
+    # Sauvegarder le résumé JSON si l'option --save-json est utilisée
+    if args.save_json:
+        try:
+            save_path = args.save_json
+            
+            # Si c'est un dossier, générer automatiquement le nom de fichier
+            if os.path.isdir(save_path) or (not os.path.exists(save_path) and not save_path.endswith('.json')):
+                # Créer le dossier s'il n'existe pas
+                os.makedirs(save_path, exist_ok=True)
+                
+                # Générer le nom de fichier automatiquement
+                now = datetime.now()
+                existing_json_files = [f for f in os.listdir(save_path) if f.endswith('.json')]
+                filename = f"{len(existing_json_files)+1}_{now.strftime('%Y%m%d%H%M%S%f')[:-3]}.json"
+                save_path = os.path.join(save_path, filename)
+            
+            # Sauvegarder le fichier
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(summary, f, indent=2, ensure_ascii=False)
+            logging.info(f"Résumé JSON sauvegardé dans: {save_path}")
+        except Exception as e:
+            logging.error(f"Erreur lors de la sauvegarde JSON: {e}")
 
     if args.json_out_only:
         print(json.dumps(summary, indent=2, ensure_ascii=False))

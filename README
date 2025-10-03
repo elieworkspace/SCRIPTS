@@ -1,8 +1,18 @@
+xml_to_json.py:
+python xml_to_json.py ../NMAP_SCAN/weak_auth_scan.xml ../NMAP_SCAN/
+>ça va enregistrer le fichier json dans NMAP_SCAN
+
 output_json_structure.py : 
 python json_schema_inspect.py big.json 
 >ça va afficher l'arbo de la structure du fichier big.json
 
-xml_to_json.py:
-python xml_to_json.py ../NMAP_SCAN/weak_auth_scan.xml ../NMAP_SCAN/
->ça va enregistrer le fichier json dans NMAP_SCAN
+nmap_summary.py
+python nmap_summary.py ../NMAP_SCAN/1_20250930145920692.json --critical 22 --json-out-only
+>ça va afficher un sumé de l'ouptput xml en json
+
+python nmap_summary.py ../NMAP_SCAN/1_20250930145920692.json --save-json ../OUTPUTS/
+>ça va sauvegarder le résumé JSON avec nom automatique (ex: 1_20250130145920692.json)
+
+python nmap_summary.py ../NMAP_SCAN/1_20250930145920692.json --save-json ../OUTPUTS/rapport_custom.json
+>ça va sauvegarder le résumé JSON avec nom spécifique
 
