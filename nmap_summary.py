@@ -162,6 +162,7 @@ def summarize(nmapjson, critical_ports=None):
     hosts_with_scripts = set()
     hosts_with_hostname = {}
     host_states = {'up': 0, 'other': 0}
+    all_services = set()  # Nouvelle ligne pour collecter tous les services
     scan_start = safe_get(nmapjson.get('nmaprun') or nmapjson, '@start') or safe_get(nmapjson.get('nmaprun') or nmapjson, 'start')
     root_version = safe_get(nmapjson.get('nmaprun') or nmapjson, '@version') or None
 
@@ -199,6 +200,7 @@ def summarize(nmapjson, critical_ports=None):
                 hosts_with_scripts.add(ip)
             if p['service']:
                 service_counter[p['service']] += 1
+                all_services.add(p['service'])  # Nouvelle ligne pour ajouter le service à la liste complète
 
     # prepare outputs
     # IP -> ports (only ports that are open + state)
@@ -245,6 +247,7 @@ def summarize(nmapjson, critical_ports=None):
         'unique_ports_count': unique_ports,
         'top_ports': [{'port': p, 'count': c} for p, c in most_common_ports],
         'top_services': [{'service': s, 'count': c} for s, c in most_common_services],
+        'all_services_found': sorted(list(all_services)),  # Nouvelle ligne avec la liste complète des services
         'hosts_with_script_output_count': len(hosts_with_scripts),
         'hosts_with_script_output': hosts_with_scripts_list,
         'hosts_with_hostname': hosts_with_hostname_list,
