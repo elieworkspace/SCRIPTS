@@ -1,18 +1,65 @@
-xml_to_json.py:
+# Scripts d'analyse Nmap
+
+## xml_to_json.py
+Convertit les fichiers XML Nmap en format JSON.
+
+```bash
 python xml_to_json.py ../NMAP_SCAN/weak_auth_scan.xml ../NMAP_SCAN/
->ça va enregistrer le fichier json dans NMAP_SCAN
+```
+> Enregistre le fichier JSON dans le dossier NMAP_SCAN
 
-output_json_structure.py : 
+## output_json_structure.py
+Affiche la structure arborescente d'un fichier JSON.
+
+```bash
 python json_schema_inspect.py big.json 
->ça va afficher l'arbo de la structure du fichier big.json
+```
+> Affiche l'arborescence de la structure du fichier big.json
 
-nmap_summary.py
+## nmap_summary.py
+Génère des résumés et analyses des scans Nmap au format JSON.
+
+### Exemples d'utilisation :
+
+#### Affichage basique avec ports critiques :
+```bash
 python nmap_summary.py ../NMAP_SCAN/1_20250930145920692.json --critical 22 --json-out-only
->ça va afficher un sumé de l'ouptput xml en json
+```
+> Affiche un résumé de l'output XML en JSON
 
+#### Sauvegarde avec nom automatique :
+```bash
 python nmap_summary.py ../NMAP_SCAN/1_20250930145920692.json --save-json ../OUTPUTS/
->ça va sauvegarder le résumé JSON avec nom automatique (ex: 1_20250130145920692.json)
+```
+> Sauvegarde le résumé JSON avec nom automatique (ex: 1_20250130145920692.json)
 
+#### Sauvegarde avec nom personnalisé :
+```bash
 python nmap_summary.py ../NMAP_SCAN/1_20250930145920692.json --save-json ../OUTPUTS/rapport_custom.json
->ça va sauvegarder le résumé JSON avec nom spécifique
+```
+> Sauvegarde le résumé JSON avec nom spécifique
+
+#### Analyse de ports ET services critiques :
+```bash
+python nmap_summary.py ../NMAP_SCAN/1_20250930145920692.json --critical 22,80,443 --critical-services ssh,http,mysql
+```
+> Analyse les ports critiques ET les services critiques
+
+#### Analyse de services critiques uniquement :
+```bash
+python nmap_summary.py ../NMAP_SCAN/1_20250930145920692.json --critical-services ssh
+```
+> Analyse seulement le service ssh (sans spécifier de ports critiques)
+
+```bash
+python nmap_summary.py ../NMAP_SCAN/1_20250930145920692.json --critical-services ssh,http,mysql
+```
+> Analyse seulement les services critiques spécifiés
+
+#### Options disponibles :
+- `--critical` : Liste de ports critiques (ex: 22,80,443)
+- `--critical-services` : Liste de services critiques (ex: ssh,http,mysql)
+- `--json-out-only` : Affiche seulement le résumé JSON
+- `--save-json` : Sauvegarde le résumé (dossier ou fichier complet)
+- `--top N` : Affiche les N ports les plus fréquents
 

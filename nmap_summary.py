@@ -153,7 +153,7 @@ def extract_address(host):
     return None
 
 
-def summarize(nmapjson, critical_ports=None):
+def summarize(nmapjson, critical_ports=None, critical_services=None):
     hosts = iterate_hosts(nmapjson)
     ip_to_ports = defaultdict(list)   # ip -> list of (port/proto, state, service)
     port_to_ips = defaultdict(set)    # "80/tcp" -> set(ips)
@@ -163,6 +163,7 @@ def summarize(nmapjson, critical_ports=None):
     hosts_with_hostname = {}
     host_states = {'up': 0, 'other': 0}
     all_services = set()  # Nouvelle ligne pour collecter tous les services
+    service_to_ip_ports = defaultdict(list)  # service -> list of "ip:port"
     scan_start = safe_get(nmapjson.get('nmaprun') or nmapjson, '@start') or safe_get(nmapjson.get('nmaprun') or nmapjson, 'start')
     root_version = safe_get(nmapjson.get('nmaprun') or nmapjson, '@version') or None
 
@@ -201,6 +202,9 @@ def summarize(nmapjson, critical_ports=None):
             if p['service']:
                 service_counter[p['service']] += 1
                 all_services.add(p['service'])  # Nouvelle ligne pour ajouter le service à la liste complète
+                # Ajouter IP:PORT pour ce service (seulement si port ouvert)
+                if p['state'] and p['state'].lower() == 'open':
+                    service_to_ip_ports[p['service']].append(f"{ip}:{p['port']}")
 
     # prepare outputs
     # IP -> ports (only ports that are open + state)
@@ -239,19 +243,24 @@ def summarize(nmapjson, critical_ports=None):
             if ips:
                 critical_list.append({'port': cp, 'ips': sorted(list(ips))})
 
+    # Nouveau: critical services summary
+    critical_services_list = []
+    if critical_services:
+        for cs in critical_services:
+            ip_ports = service_to_ip_ports.get(cs, [])
+            if ip_ports:
+                critical_services_list.append({'service': cs, 'ips': sorted(list(set(ip_ports)))})
+
     summary = {
-        'scan_start': scan_start,
-        'nmap_version': root_version,
-        'total_hosts_seen': total_hosts,
-        'hosts_up': total_hosts_up,
-        'unique_ports_count': unique_ports,
-        'top_ports': [{'port': p, 'count': c} for p, c in most_common_ports],
-        'top_services': [{'service': s, 'count': c} for s, c in most_common_services],
-        'all_services_found': sorted(list(all_services)),  # Nouvelle ligne avec la liste complète des services
-        'hosts_with_script_output_count': len(hosts_with_scripts),
-        'hosts_with_script_output': hosts_with_scripts_list,
+        'total_hosts': total_hosts,
+        'total_hosts_up': total_hosts_up,
+        'unique_ports': unique_ports,
+        'most_common_ports': most_common_ports,
+        'most_common_services': most_common_services,
+        'hosts_with_scripts': hosts_with_scripts_list,
         'hosts_with_hostname': hosts_with_hostname_list,
-        'critical_ports_summary': critical_list
+        'critical_ports_summary': critical_list,
+        'critical_services_summary': critical_services_list
     }
 
     return ip_ports_simple, port_ips_simple, summary
@@ -262,6 +271,7 @@ def main():
     parser.add_argument("json_file", help="Fichier JSON export Nmap (structure nmaprun)")
     parser.add_argument("--top", type=int, default=0, help="Afficher seulement les N ports les plus fréquents (0 = tous)")
     parser.add_argument("--critical", type=str, default="", help="Liste de ports critiques séparés par des virgules ex: 22,80,3389")
+    parser.add_argument("--critical-services", type=str, default="", help="Liste de services critiques séparés par des virgules ex: ssh,http,mysql")
     parser.add_argument("--json-out-only", action="store_true", help="Afficher seulement le résumé key/value (JSON)")
     parser.add_argument("--save-json", type=str, default="", help="Sauvegarder le résumé JSON: chemin de dossier (nom auto) ou chemin de fichier complet")
     args = parser.parse_args()
@@ -287,7 +297,14 @@ def main():
                 except:
                     pass
 
-    ip_ports, port_ips, summary = summarize(data, critical_ports=critical_ports)
+    critical_services = []
+    if args.critical_services:
+        for s in args.critical_services.split(','):
+            s = s.strip()
+            if s:
+                critical_services.append(s)
+
+    ip_ports, port_ips, summary = summarize(data, critical_ports=critical_ports, critical_services=critical_services)
 
     # Sauvegarder le résumé JSON si l'option --save-json est utilisée
     if args.save_json:
